@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NeighborHub Dashboard</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.js"></script>
+<style>
+:root{--bg:#f4f7f5;--card:#fff;--text:#1c2b24;--muted:#66756d;--line:#e1e8e4;--brand:#1f7a5a;--soft:#e3f3ec;--warn:#b45309;--warnbg:#fef3e2;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121a16;--card:#1a2520;--text:#e8f0ec;--muted:#93a39a;--line:#2a3831;--brand:#4cc79b;--soft:#1f3a2f;--warn:#f5b45a;--warnbg:#3a2c14}}
+:root[data-theme="dark"]{--bg:#121a16;--card:#1a2520;--text:#e8f0ec;--muted:#93a39a;--line:#2a3831;--brand:#4cc79b;--soft:#1f3a2f;--warn:#f5b45a;--warnbg:#3a2c14}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.muted{color:var(--muted)}.brand{color:var(--brand)}
+.pill{background:var(--soft);color:var(--brand);border-radius:999px;padding:2px 10px;font-size:12px}
+.nav{display:block;width:100%;text-align:left;padding:9px 12px;border-radius:10px;color:var(--muted);cursor:pointer;background:none;border:0;font-size:14px}
+.nav.on,.nav:hover{background:var(--soft);color:var(--brand)}
+.btn{background:var(--brand);color:#fff;border:0;border-radius:10px;padding:8px 14px;cursor:pointer;font-size:14px}
+.day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:13px;position:relative}
+.day.ev::after{content:"";position:absolute;bottom:3px;width:5px;height:5px;border-radius:50%;background:var(--brand)}
+.day.today{background:var(--brand);color:#fff}
+input{background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:8px 12px;font-size:14px;width:100%}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const {useState}=React;const html=htm.bind(React.createElement);
+const roles=["Resident","Business Owner","Community Admin"];
+const announcements=[
+{t:"Water interruption Saturday",d:"8 AM–12 PM on Maple St.",tag:"Notice",w:true},
+{t:"Weekend farmers market",d:"Local vendors, Sunday at the plaza.",tag:"Commerce"},
+{t:"Quiet hours reminder",d:"Please keep noise low after 10 PM.",tag:"Guideline"}];
+const schedule=[
+{time:"9:00 AM",t:"Street cleaning",who:"Barangay crew"},
+{time:"1:00 PM",t:"Vendor permit review",who:"Admin"},
+{time:"6:30 PM",t:"Neighbors meeting",who:"Community hall"}];
+const contacts=[
+{n:"Ana Reyes",r:"Community Admin"},{n:"Mang Tonyo Store",r:"Business Owner"},
+{n:"Barangay Hall",r:"Emergency"},{n:"Liza Cruz",r:"Resident"}];
+const chat=[
+{n:"Ana",m:"Reminder: meeting tonight at 6:30."},
+{n:"Tonyo",m:"Can I extend my stall hours Sunday?"},
+{n:"You",m:"Yes, check the guidelines first."}];
+const reports=[{t:"Noise complaint, Block 4",s:"Open"},{t:"Stall placement dispute",s:"Mediating"},{t:"Broken streetlight",s:"Resolved"}];
+const evDays=[3,8,12,15,22,28];
+
+function Stat({l,v,s}){return html`<div class="card"><div class="muted text-sm">${l}</div><div class="text-3xl font-semibold mt-1">${v}</div><div class="text-xs brand mt-1">${s}</div></div>`}
+function Calendar(){
+ const days=Array.from({length:31},(_,i)=>i+1);const today=new Date().getDate();
+ return html`<div class="card"><div class="flex justify-between items-center mb-3"><b>Calendar</b><span class="pill">${new Date().toLocaleString("en",{month:"long",year:"numeric"})}</span></div>
+ <div class="grid grid-cols-7 gap-1 text-center muted text-xs mb-1">${["S","M","T","W","T","F","S"].map((d,i)=>html`<div key=${i}>${d}</div>`)}</div>
+ <div class="grid grid-cols-7 gap-1">${days.map(d=>html`<div key=${d} class=${"day "+(evDays.includes(d)?"ev ":"")+(d===today?"today":"")}>${d}</div>`)}</div></div>`}
+function App(){
+ const [role,setRole]=useState(roles[0]);const [tab,setTab]=useState("Dashboard");
+ const [msgs,setMsgs]=useState(chat);const [txt,setTxt]=useState("");
+ const [open,setOpen]=useState(false);
+ const send=()=>{if(!txt.trim())return;setMsgs([...msgs,{n:"You",m:txt}]);setTxt("")};
+ const tabs=["Dashboard","Announcements","Schedule","Calendar","Chat","Contacts","Reports"];
+ const side=html`<div><div class="text-xl font-semibold brand mb-4">🏘️ NeighborHub</div>${tabs.map(t=>html`<button key=${t} class=${"nav "+(tab===t?"on":"")} onClick=${()=>{setTab(t);setOpen(false)}}>${t}</button>`)}</div>`;
+ const annList=html`<div class="space-y-3">${announcements.map(a=>html`<div key=${a.t} class="card" style=${a.w?{background:"var(--warnbg)"}:{}}><div class="flex justify-between"><b>${a.t}</b><span class="pill">${a.tag}</span></div><div class="muted text-sm mt-1">${a.d}</div></div>`)}</div>`;
+ const schList=html`<div class="space-y-3">${schedule.map(s=>html`<div key=${s.t} class="card flex gap-3 items-center"><span class="pill">${s.time}</span><div><b>${s.t}</b><div class="muted text-xs">${s.who}</div></div></div>`)}</div>`;
+ const conList=html`<div class="grid sm:grid-cols-2 gap-3">${contacts.map(c=>html`<div key=${c.n} class="card flex items-center gap-3"><div class="pill" style=${{width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center"}}>${c.n[0]}</div><div><b>${c.n}</b><div class="muted text-xs">${c.r}</div></div></div>`)}</div>`;
+ const chatBox=html`<div class="card"><div class="space-y-2 mb-3" style=${{maxHeight:260,overflowY:"auto"}}>${msgs.map((m,i)=>html`<div key=${i} class=${"text-sm "+(m.n==="You"?"text-right":"")}><span class="muted text-xs">${m.n}</span><div><span class="pill" style=${{borderRadius:12,padding:"6px 12px",display:"inline-block",fontSize:14}}>${m.m}</span></div></div>`)}</div>
+ <div class="flex gap-2"><input value=${txt} onInput=${e=>setTxt(e.target.value)} onKeyDown=${e=>e.key==="Enter"&&send()} placeholder="Message your neighbors…"/><button class="btn" onClick=${send}>Send</button></div></div>`;
+ const repList=html`<div class="space-y-3">${reports.map(r=>html`<div key=${r.t} class="card flex justify-between"><span>${r.t}</span><span class="pill">${r.s}</span></div>`)}</div>`;
+ let main;
+ if(tab==="Dashboard") main=html`<div class="space-y-4">
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3"><${Stat} l="Neighbors" v="248" s="+12 this month"/><${Stat} l="Local businesses" v="37" s="5 new"/><${Stat} l="Open reports" v="3" s="1 resolved today"/><${Stat} l="Events this month" v="6" s="Next: Sunday market"/></div>
+  <div class="grid lg:grid-cols-3 gap-4"><div class="lg:col-span-2 space-y-4"><div><b>Announcements</b><div class="mt-2">${annList}</div></div><div><b>Neighbor chat</b><div class="mt-2">${chatBox}</div></div></div>
+  <div class="space-y-4"><${Calendar}/><div><b>Today's schedule</b><div class="mt-2">${schList}</div></div></div></div>
+  <div><b>Guidelines & reports</b><div class="mt-2 grid lg:grid-cols-2 gap-3"><div class="card"><div class="muted text-sm">Community rules</div><ul class="text-sm mt-2 space-y-1"><li>• Be honest in pricing and listings</li><li>• Quiet hours 10 PM–6 AM</li><li>• Talk first, report second</li></ul></div>${repList}</div></div></div>`;
+ else main=html`<div class="max-w-3xl">${{Announcements:annList,Schedule:schList,Calendar:html`<${Calendar}/>`,Chat:chatBox,Contacts:conList,Reports:repList}[tab]}</div>`;
+ return html`<div class="min-h-screen lg:flex">
+  <aside class="hidden lg:block w-56 p-4 border-r" style=${{borderColor:"var(--line)"}}>${side}</aside>
+  ${open&&html`<aside class="lg:hidden p-4 border-b" style=${{borderColor:"var(--line)",background:"var(--card)"}}>${side}</aside>`}
+  <div class="flex-1 p-4 lg:p-6 min-w-0">
+   <div class="flex items-center justify-between mb-4 gap-2"><div class="flex items-center gap-2"><button class="btn lg:hidden" onClick=${()=>setOpen(!open)}>☰</button><div><h1 class="text-xl font-semibold">${tab}</h1><div class="muted text-xs">Welcome back, neighbor</div></div></div>
+    <select value=${role} onChange=${e=>setRole(e.target.value)} class="card" style=${{padding:"6px 10px",fontSize:13}}>${roles.map(r=>html`<option key=${r}>${r}</option>`)}</select></div>
+   ${main}</div></div>`}
+ReactDOM.createRoot(document.getElementById("root")).render(html`<${App}/>`);
+</script>
+</body>
+</html>
